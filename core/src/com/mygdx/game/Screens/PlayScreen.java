@@ -20,10 +20,12 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.mygdx.game.Enemies.probateEnemy;
 import com.mygdx.game.MyGdxGame;
 import com.mygdx.game.Scenes.Hud;
 import com.mygdx.game.Sprites.Therion;
 import com.mygdx.game.Tools.B2WorldCreator;
+import com.mygdx.game.Tools.MyContactListener;
 
 public class PlayScreen implements Screen {
 
@@ -42,6 +44,7 @@ public class PlayScreen implements Screen {
     private World world;
     private Box2DDebugRenderer b2dr;
     private Therion player;
+    private probateEnemy enemy;
 
     private TextureAtlas textureAtlas;
 
@@ -124,15 +127,22 @@ public class PlayScreen implements Screen {
         btnAttack.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-               player.checkAttack();
+                if (player.b2body.getLinearVelocity().y == 0){
+                    player.b2body.setLinearVelocity(new Vector2(0f,player.b2body.getLinearVelocity().y));
+                }
+
+               player.playerAttackSensor.checkAttack();
             }
         });
         hud.stage.addActor(btnAttack);
 
 
-
+    enemy = new probateEnemy(world,this);
+    enemy.setPosition(300,20);
 
         Gdx.input.setInputProcessor(hud.stage);
+        MyContactListener contactListener = new MyContactListener();
+        world.setContactListener(contactListener);
     }
 
 
@@ -151,6 +161,7 @@ public class PlayScreen implements Screen {
         world.step(1/60f,6,2);
             gameCam.position.x = player.b2body.getPosition().x;
             player.update(dt);
+            enemy.update(dt);
     }
 
     public void handleInput(float dt){
@@ -161,7 +172,9 @@ public class PlayScreen implements Screen {
             float velocityX = knobPercentX * 2.0f;
 
             // Aplica la velocidad al cuerpo del jugador
-            player.b2body.setLinearVelocity(new Vector2(velocityX, player.b2body.getLinearVelocity().y));
+            if (player.currentState != Therion.State.ATTACKING) {
+                player.b2body.setLinearVelocity(new Vector2(velocityX, player.b2body.getLinearVelocity().y));
+            }
         }
         /*
         if (Gdx.input.isKeyJustPressed(Input.Keys.UP)) {

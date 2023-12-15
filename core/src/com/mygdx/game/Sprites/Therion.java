@@ -4,27 +4,25 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.EdgeShape;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
+import com.mygdx.game.Enemies.probateEnemy;
 import com.mygdx.game.MyGdxGame;
 import com.mygdx.game.Screens.PlayScreen;
-
-import java.io.Console;
 
 public class Therion extends Sprite {
 
     public World world;
     public Body b2body;
 
+    public boolean attack;
 
 
     public enum State{
@@ -44,7 +42,7 @@ public class Therion extends Sprite {
     Texture jumpSheet;
     Texture attackSheet;
 
-    private boolean runningRight;
+    public boolean runningRight;
     private float stateTimer;
 
     public Therion(World world, PlayScreen screen){
@@ -142,11 +140,12 @@ public class Therion extends Sprite {
         if ((b2body.getLinearVelocity().x < 0  || !runningRight) && !region.isFlipX()){
             region.flip(true,false);
             runningRight = false;
-            updateAttackFixture();
+            playerAttackSensor.updateAttackFixture();
+
         } else if ((b2body.getLinearVelocity().x > 0 || runningRight) && region.isFlipX()) {
             region.flip(true,false);
             runningRight = true;
-            updateAttackFixture();
+            playerAttackSensor.updateAttackFixture();
         }
 
         stateTimer =  currentState == previousState ? stateTimer + dt : 0f;
@@ -156,11 +155,13 @@ public class Therion extends Sprite {
 
     }
 
+    public  playerAttackSensor playerAttackSensor;
+
     private State getState() {
         if (currentState == State.ATTACKING && !therionAttack.isAnimationFinished(stateTimer)){
         return State.ATTACKING;
         }else{
-
+        attack = false;
         if (b2body.getLinearVelocity().y > 0 || (b2body.getLinearVelocity().y < 0 && previousState == State.JUMPING)){
             return State.JUMPING;
         }
@@ -174,7 +175,9 @@ public class Therion extends Sprite {
         }
     }
 
-    private Fixture attackFixture; // Nueva variable para la fixture de ataque
+
+
+    //private Fixture attackFixture; // Nueva variable para la fixture de ataque
 
 
     public void defineTherion(){
@@ -203,14 +206,15 @@ public class Therion extends Sprite {
         shape.dispose();
 
 
-        attackFixture = null; // Reiniciar la fixture de ataque
 
         // Crear una hitbox rectangular frente al jugador
 runningRight = true;
-        createAttackFixture();
+
+        playerAttackSensor = new playerAttackSensor(this);
+
 
     }
-
+/*
     private void createAttackFixture() {
         PolygonShape attackShape = new PolygonShape();
         float offsetX = runningRight ? 16 / MyGdxGame.PPM : -16 / MyGdxGame.PPM;
@@ -219,7 +223,7 @@ runningRight = true;
         FixtureDef attackFixtureDef = new FixtureDef();
         attackFixtureDef.shape = attackShape;
         attackFixtureDef.isSensor = true; // Configurar la fixture como un sensor
-
+        attackFixture.setUserData("playerAttackSensor");
         attackFixture = b2body.createFixture(attackFixtureDef);
 
         // Liberar los recursos del shape
@@ -238,8 +242,13 @@ runningRight = true;
     }
 
     public void checkAttack() {
+
     currentState = State.ATTACKING;
+
+
         System.out.println("Ataque");
     }
+
+ */
 
 }
