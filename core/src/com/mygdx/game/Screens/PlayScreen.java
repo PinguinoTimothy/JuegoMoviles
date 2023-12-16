@@ -23,6 +23,8 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import com.mygdx.game.Enemies.probateEnemy;
 import com.mygdx.game.MyGdxGame;
 import com.mygdx.game.Scenes.Hud;
+import com.mygdx.game.Sprites.Enemigo1;
+import com.mygdx.game.Sprites.Enemy;
 import com.mygdx.game.Sprites.Therion;
 import com.mygdx.game.Tools.B2WorldCreator;
 import com.mygdx.game.Tools.MyContactListener;
@@ -44,7 +46,6 @@ public class PlayScreen implements Screen {
     private World world;
     private Box2DDebugRenderer b2dr;
     private Therion player;
-    private probateEnemy enemy;
 
     private TextureAtlas textureAtlas;
 
@@ -55,6 +56,10 @@ public class PlayScreen implements Screen {
 
     private  Skin btnAttackSkin;
     private ImageButton btnAttack;
+    public Float dt;
+
+    private B2WorldCreator creator;
+
     public PlayScreen(MyGdxGame game){
         this.game = game;
         gameCam = new OrthographicCamera();
@@ -64,7 +69,7 @@ public class PlayScreen implements Screen {
         viewport = new ExtendViewport(viewportWidth/MyGdxGame.PPM,viewportHeight/MyGdxGame.PPM,gameCam);
 
         mapLoader = new TmxMapLoader();
-        map = mapLoader.load("nivel.tmx");
+        map = mapLoader.load("nivelNuevo.tmx");
         mapRenderer = new OrthogonalTiledMapRenderer(map,1/MyGdxGame.PPM);
 
         gameCam.position.set(viewport.getWorldWidth()/2 ,viewport.getWorldHeight()/2,0);
@@ -75,13 +80,13 @@ public class PlayScreen implements Screen {
         world = new World(new Vector2(0,-9.8f ),true);
         b2dr = new Box2DDebugRenderer();
 
-        new B2WorldCreator(world,map);
+        creator = new B2WorldCreator(this);
 
 
         hud = new Hud(game.batch);
 
         textureAtlas = new TextureAtlas("player.pack");
-        player = new Therion(world,this);
+        player = new Therion(this);
 
         touchpadSkin = new Skin();
         touchpadSkin.add("touchBackground", new Texture("Joystick.png"));
@@ -127,22 +132,22 @@ public class PlayScreen implements Screen {
         btnAttack.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                if (player.b2body.getLinearVelocity().y == 0){
+                if (player.b2body.getLinearVelocity().y != 0){
                     player.b2body.setLinearVelocity(new Vector2(0f,player.b2body.getLinearVelocity().y));
                 }
 
-               player.playerAttackSensor.checkAttack();
+               player.playerAttackSensor.checkAttack(dt);
             }
         });
         hud.stage.addActor(btnAttack);
 
 
-    enemy = new probateEnemy(world,this);
-    enemy.setPosition(300,20);
 
         Gdx.input.setInputProcessor(hud.stage);
         MyContactListener contactListener = new MyContactListener();
         world.setContactListener(contactListener);
+
+
     }
 
 
@@ -161,7 +166,11 @@ public class PlayScreen implements Screen {
         world.step(1/60f,6,2);
             gameCam.position.x = player.b2body.getPosition().x;
             player.update(dt);
-            enemy.update(dt);
+        for (Enemy enemy: creator.getEnemigos1())
+        {
+        enemy.update(dt);
+        }
+
     }
 
     public void handleInput(float dt){
@@ -172,7 +181,7 @@ public class PlayScreen implements Screen {
             float velocityX = knobPercentX * 2.0f;
 
             // Aplica la velocidad al cuerpo del jugador
-            if (player.currentState != Therion.State.ATTACKING) {
+            if (!player.is_attacking) {
                 player.b2body.setLinearVelocity(new Vector2(velocityX, player.b2body.getLinearVelocity().y));
             }
         }
@@ -198,6 +207,7 @@ public class PlayScreen implements Screen {
 
     @Override
     public void render(float delta) {
+        dt = delta;
         update(delta);
 
         Gdx.gl.glClearColor(1,0,0,1);
@@ -212,6 +222,10 @@ public class PlayScreen implements Screen {
         game.batch.setProjectionMatrix(gameCam.combined);
         game.batch.begin();
         player.draw(game.batch);
+        for (Enemy enemy: creator.getEnemigos1())
+        {
+            enemy.draw(game.batch);
+        }
         game.batch.end();
         // Renderizar el HUD después del tilemap
         hud.stage.draw();
@@ -229,6 +243,13 @@ public class PlayScreen implements Screen {
         viewport.getCamera().update();
     }
 
+    public TiledMap getMap(){
+        return map;
+    }
+
+    public World getWorld(){
+        return world;
+    }
 
 
     @Override

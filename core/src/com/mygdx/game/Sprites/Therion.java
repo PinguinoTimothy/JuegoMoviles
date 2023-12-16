@@ -22,41 +22,54 @@ public class Therion extends Sprite {
     public World world;
     public Body b2body;
 
-    public boolean attack;
-
+    public boolean is_attacking;
+    public int comboAttack;
+    public int comboQueue;
 
     public enum State{
         IDLE,
         RUNNING,
         JUMPING,
         FALLING,
-    ATTACKING};
+    ATTACKING_01,
+        ATTACKING_02,
+        ATTACKING_03};
     public  State currentState;
     public State previousState;
     private Animation<TextureRegion> therionRun;
     private Animation<TextureRegion> therionJump;
     private Animation<TextureRegion> therionIdle;
-    private  Animation<TextureRegion> therionAttack;
+    public    Animation<TextureRegion> therionAttack01;
+    public   Animation<TextureRegion> therionAttack02;
+    public   Animation<TextureRegion> therionAttack03;
+
     Texture runSheet;
     Texture idleSheet;
     Texture jumpSheet;
-    Texture attackSheet;
+    Texture attack01Sheet;
+    Texture attack02Sheet;
+    Texture attack03Sheet;
+
 
     public boolean runningRight;
-    private float stateTimer;
+    public float stateTimer;
 
-    public Therion(World world, PlayScreen screen){
-        this.world = world;
+    public PlayScreen screen;
+    public Therion(PlayScreen screen){
+        this.world = screen.getWorld();
+        this.screen = screen;
         defineTherion();
 
 
-     setBounds(0,0,35/MyGdxGame.PPM,47/MyGdxGame.PPM);
+     setBounds(0,10,35/MyGdxGame.PPM,47/MyGdxGame.PPM);
 
 
         runSheet = new Texture("Run-Sheet.png");
         idleSheet = new Texture("Idle-Sheet.png");
         jumpSheet = new Texture("Jump-Start-Sheet.png");
-        attackSheet = new Texture("attack-sheet.png");
+        attack01Sheet = new Texture("ataque1.png");
+        attack02Sheet = new Texture("ataque2.png");
+        attack03Sheet = new Texture("ataque3.png");
 
         TextureRegion[][] tmpRun = TextureRegion.split(runSheet,runSheet.getWidth() / 8,runSheet.getHeight());
 
@@ -82,12 +95,27 @@ public class Therion extends Sprite {
         therionJump = new Animation<TextureRegion>(1f/4f,jumpFrames);
 
 
-        TextureRegion[][] tmpAttack = TextureRegion.split(attackSheet,attackSheet.getWidth() / 8,attackSheet.getHeight());
-        TextureRegion[] attackFrames = new TextureRegion[8];
-        for (int i = 0; i < 8; i++) {
-            attackFrames[i] = tmpAttack[0][i];
+        TextureRegion[][] tmpAttack01 = TextureRegion.split(attack01Sheet,attack01Sheet.getWidth() / 4,attack01Sheet.getHeight());
+        TextureRegion[] attackFrames1 = new TextureRegion[4];
+        for (int i = 0; i < 4; i++) {
+            attackFrames1[i] = tmpAttack01[0][i];
         }
-        therionAttack = new Animation<TextureRegion>(1f/8f,attackFrames);
+        therionAttack01 = new Animation<TextureRegion>(1f/6f,attackFrames1);
+
+        TextureRegion[][] tmpAttack02 = TextureRegion.split(attack02Sheet,attack02Sheet.getWidth() / 4,attack02Sheet.getHeight());
+        TextureRegion[] attackFrames2 = new TextureRegion[4];
+        for (int i = 0; i < 4; i++) {
+            attackFrames2[i] = tmpAttack02[0][i];
+        }
+        therionAttack02 = new Animation<TextureRegion>(1f/6f,attackFrames2);
+
+        TextureRegion[] attackFrames3 = new TextureRegion[4];
+
+        TextureRegion[][] tmpAttack03 = TextureRegion.split(attack03Sheet,attack03Sheet.getWidth() / 4,attack03Sheet.getHeight());
+        for (int i = 0; i < 4; i++) {
+            attackFrames3[i] = tmpAttack03[0][i];
+        }
+        therionAttack03 = new Animation<TextureRegion>(1f/6f,attackFrames3);
 
         currentState = State.IDLE;
         previousState = State.IDLE;
@@ -129,8 +157,14 @@ public class Therion extends Sprite {
             case RUNNING:
                 region =  therionRun.getKeyFrame(stateTimer,true);
                 break;
-            case ATTACKING:
-                region = therionAttack.getKeyFrame(stateTimer);
+            case ATTACKING_01:
+                region = therionAttack01.getKeyFrame(stateTimer);
+                break;
+            case ATTACKING_02:
+                region = therionAttack02.getKeyFrame(stateTimer);
+                break;
+            case ATTACKING_03:
+                region = therionAttack03.getKeyFrame(stateTimer);
                 break;
             default:
                 region =  therionIdle.getKeyFrame(stateTimer,true);
@@ -140,28 +174,49 @@ public class Therion extends Sprite {
         if ((b2body.getLinearVelocity().x < 0  || !runningRight) && !region.isFlipX()){
             region.flip(true,false);
             runningRight = false;
-            playerAttackSensor.updateAttackFixture();
 
         } else if ((b2body.getLinearVelocity().x > 0 || runningRight) && region.isFlipX()) {
             region.flip(true,false);
             runningRight = true;
-            playerAttackSensor.updateAttackFixture();
+
+        }
+        if ((currentState == State.ATTACKING_01 && therionAttack01.isAnimationFinished(stateTimer))){
+        atk1Fin = true;
+        }else{
+            atk1Fin = false;
+        }
+        if ((currentState == State.ATTACKING_02 && therionAttack02.isAnimationFinished(stateTimer))){
+            atk2Fin = true;
+        }else{
+            atk2Fin = false;
+        }
+        if ((currentState == State.ATTACKING_03 && therionAttack03.isAnimationFinished(stateTimer))){
+            atk3Fin = true;
+        }else{
+            atk3Fin = false;
         }
 
-        stateTimer =  currentState == previousState ? stateTimer + dt : 0f;
+            stateTimer =  currentState == previousState ? stateTimer + dt : 0f;
+
         previousState = currentState;
         return region;
 
 
     }
 
+    public boolean atk1Fin;
+    public boolean atk2Fin;
+    public boolean atk3Fin;
+
     public  playerAttackSensor playerAttackSensor;
 
     private State getState() {
-        if (currentState == State.ATTACKING && !therionAttack.isAnimationFinished(stateTimer)){
-        return State.ATTACKING;
+        if ((currentState == State.ATTACKING_01 && !therionAttack01.isAnimationFinished(stateTimer)) || (currentState == State.ATTACKING_02 && !therionAttack02.isAnimationFinished(stateTimer)) || (currentState == State.ATTACKING_03 && !therionAttack03.isAnimationFinished(stateTimer))){
+        return currentState;
         }else{
-        attack = false;
+        is_attacking = false;
+        comboAttack = 0;
+        comboQueue = 0;
         if (b2body.getLinearVelocity().y > 0 || (b2body.getLinearVelocity().y < 0 && previousState == State.JUMPING)){
             return State.JUMPING;
         }

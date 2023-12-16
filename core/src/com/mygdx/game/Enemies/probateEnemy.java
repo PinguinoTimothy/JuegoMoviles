@@ -39,9 +39,11 @@ public class probateEnemy extends Sprite {
 
     }
 
+    private boolean destruido = false;
     public  void update(float dt){
-    if (muerto){
-        b2body.destroyFixture(fixture);
+    if (muerto && !destruido){
+        world.destroyBody(b2body);
+        destruido = true;
     }
 
     }
@@ -70,7 +72,7 @@ private Fixture fixture;
     public void defineEnemy() {
         BodyDef bodyDef = new BodyDef();
         bodyDef.position.set(64 / MyGdxGame.PPM, 32 / MyGdxGame.PPM);
-        bodyDef.type = BodyDef.BodyType.StaticBody;
+        bodyDef.type = BodyDef.BodyType.DynamicBody;
         b2body = world.createBody(bodyDef);
         b2body.setFixedRotation(true);
 
