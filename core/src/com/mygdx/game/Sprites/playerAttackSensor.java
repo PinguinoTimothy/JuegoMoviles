@@ -12,12 +12,15 @@ import com.mygdx.game.Tools.MyContactListener;
 
 public class playerAttackSensor{
     private Fixture attackFixture; // Nueva variable para la fixture de ataque
+    private Fixture screenAttackFixture; // Nueva variable para la fixture de ataque
+
 
     public Array<Enemy> enemigosEnRangoMelee = new Array<Enemy>();
     public Therion player;
     public playerAttackSensor(Therion player){
         this.player = player;
     }
+
     private void createAttackFixture() {
         PolygonShape attackShape = new PolygonShape();
         float offsetX = player.runningRight ? 12 / MyGdxGame.PPM : -12 / MyGdxGame.PPM;
@@ -27,10 +30,33 @@ public class playerAttackSensor{
         attackFixtureDef.shape = attackShape;
         attackFixtureDef.isSensor = true; // Configurar la fixture como un sensor
         attackFixture = player.b2body.createFixture(attackFixtureDef);
-        attackFixture.setUserData(this);
+        attackFixture.setUserData("no");
 
         // Liberar los recursos del shape
         attackShape.dispose();
+    }
+    public void createScreenAttackFixture() {
+        PolygonShape attackShape = new PolygonShape();
+
+        attackShape.setAsBox(90 / MyGdxGame.PPM, 50 / MyGdxGame.PPM);
+
+        FixtureDef attackFixtureDef = new FixtureDef();
+        attackFixtureDef.shape = attackShape;
+        attackFixtureDef.isSensor = true; // Configurar la fixture como un sensor
+        screenAttackFixture = player.b2body.createFixture(attackFixtureDef);
+        screenAttackFixture.setUserData(this);
+
+        // Liberar los recursos del shape
+        attackShape.dispose();
+    }
+
+    public void updateScreenAttackFixture(){
+        if (screenAttackFixture != null) {
+            // Si la fixture de ataque ya existe, la eliminamos antes de recrearla
+            player.b2body.destroyFixture(screenAttackFixture);
+            screenAttackFixture = null;
+        }
+        createScreenAttackFixture();
     }
 
     public void updateAttackFixture() {
@@ -44,7 +70,15 @@ public class playerAttackSensor{
         createAttackFixture();
     }
 
-    public void atacar(Array<Enemy> enemigos, int daño){
+    public void gestionAtaque(){
+        createAttackFixture();
+        MyContactListener myContactListener = new MyContactListener();
+        atacar(25);
+        player.b2body.destroyFixture(attackFixture);
+        enemigosEnRangoMelee.clear();
+    }
+
+    public void atacar(int daño){
         for (Enemy enemigo : enemigosEnRangoMelee) {
             enemigo.recibirDaño(daño) ;
         }
@@ -72,7 +106,7 @@ public class playerAttackSensor{
         }
 
 
-     */
+
 
         if (!player.is_attacking) {
             player.is_attacking = true;

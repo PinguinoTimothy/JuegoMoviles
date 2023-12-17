@@ -141,6 +141,7 @@ public class Therion extends Sprite {
 
     public  void update(float dt){
         setPosition(b2body.getPosition().x-getWidth()/2,b2body.getPosition().y-getHeight()/2);
+        playerAttackSensor.updateScreenAttackFixture();
         setRegion(getFrame(dt));
 
 
@@ -237,7 +238,7 @@ public class Therion extends Sprite {
 
     public void defineTherion(){
         BodyDef bodyDef = new BodyDef();
-        bodyDef.position.set(32/MyGdxGame.PPM,32/MyGdxGame.PPM);
+        bodyDef.position.set(12/MyGdxGame.PPM,64/MyGdxGame.PPM);
         bodyDef.type = BodyDef.BodyType.DynamicBody;
         b2body = world.createBody(bodyDef);
         b2body.setFixedRotation(true);
@@ -266,7 +267,7 @@ public class Therion extends Sprite {
 runningRight = true;
 
         playerAttackSensor = new playerAttackSensor(this);
-
+        playerAttackSensor.createScreenAttackFixture();
 
     }
 /*

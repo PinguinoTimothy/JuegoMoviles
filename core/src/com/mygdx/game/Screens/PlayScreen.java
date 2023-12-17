@@ -33,7 +33,7 @@ public class PlayScreen implements Screen {
 
     private MyGdxGame game;
     private OrthographicCamera gameCam;
-    private Viewport viewport;
+    public Viewport viewport;
     private Hud hud;
 
 
@@ -136,7 +136,7 @@ public class PlayScreen implements Screen {
                     player.b2body.setLinearVelocity(new Vector2(0f,player.b2body.getLinearVelocity().y));
                 }
 
-               player.playerAttackSensor.checkAttack(dt);
+               player.playerAttackSensor.gestionAtaque();
             }
         });
         hud.stage.addActor(btnAttack);
